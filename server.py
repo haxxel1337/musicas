@@ -1,16 +1,20 @@
-from flask import Flask, request, redirect, session, jsonify
+from flask import Flask, request, redirect, session, jsonify, send_from_directory
 import requests
+import os
 
-app = Flask(__name__)
-app.secret_key = "y08uk9fh"
+# Setup Flask med client-foldern som statisk
+app = Flask(__name__, static_folder="client", static_url_path="/client")
+app.secret_key = "supersecret"  # Byt gärna till något säkrare i produktion
 
+# Spotify credentials (du har angett dessa)
 CLIENT_ID = "27a09eb146a942a7adcbf5507822bacd"
 CLIENT_SECRET = "2a81776d787a47d9abedd0facfb49cec"
 REDIRECT_URI = "https://musicas-d1ev.onrender.com/callback"
 
 @app.route("/")
 def index():
-    return redirect("/client/index.html")
+    # Skickar användaren till startsidan
+    return send_from_directory("client", "index.html")
 
 @app.route("/login")
 def login():
@@ -48,8 +52,7 @@ def tracks():
     response = requests.get(url, headers={"Authorization": f"Bearer {token}"})
     return jsonify(response.json())
 
+# 🔌 Gör att Render kan binda rätt port (via miljövariabel)
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
