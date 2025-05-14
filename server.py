@@ -2,11 +2,11 @@ from flask import Flask, request, redirect, session, jsonify
 import requests
 
 app = Flask(__name__)
-app.secret_key = "supersecret"
+app.secret_key = "y08uk9fh"
 
 CLIENT_ID = "27a09eb146a942a7adcbf5507822bacd"
 CLIENT_SECRET = "2a81776d787a47d9abedd0facfb49cec"
-REDIRECT_URI = "https://dinapp.onrender.com/callback"
+REDIRECT_URI = "https://musicas-d1ev.onrender.com/callback"
 
 @app.route("/")
 def index():
