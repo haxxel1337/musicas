@@ -2,115 +2,78 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Musicas – Autoplay</title>
+  <title>Musicas – Web Playback SDK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #141e30, #243b55);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 60px;
-      margin: 0;
-    }
-    h1 {
-      font-size: 42px;
-      margin-bottom: 20px;
+      background: #121212;
+      color: #fff;
+      text-align: center;
+      padding-top: 50px;
     }
     input, button {
+      padding: 12px;
       font-size: 16px;
-      padding: 10px;
+      margin: 10px;
       border-radius: 6px;
       border: none;
-      margin: 5px;
-    }
-    input {
-      width: 300px;
     }
     button {
-      background: #1db954;
+      background-color: #1db954;
       color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1ed760;
+      font-weight: bold;
     }
     #countdown {
-      font-size: 100px;
-      margin: 40px 0;
+      font-size: 80px;
+      margin-top: 40px;
       display: none;
-    }
-    #player {
-      margin-top: 30px;
-      width: 100%;
-      max-width: 400px;
-      display: none;
-    }
-    iframe {
-      border-radius: 12px;
-      width: 100%;
-      height: 152px;
-      border: none;
     }
     #info {
       margin-top: 20px;
       font-size: 18px;
-      display: none;
     }
   </style>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-  <h1>Musicas</h1>
-  <div id="login">
-    <a href="/login"><button>Logga in med Spotify</button></a>
-  </div>
-
+  <h1>Musicas SDK</h1>
+  <button onclick="login()">Logga in med Spotify</button>
   <div id="main" style="display:none;">
-    <input id="playlist-url" placeholder="Klistra in Spotify playlist-URL">
+    <input id="playlist-url" placeholder="Klistra in Spotify playlist-URL" size="50">
     <br>
-    <button onclick="loadTracks()">OK</button>
+    <button onclick="loadPlaylist()">OK</button>
   </div>
-
   <div id="go-section" style="display:none;">
     <button onclick="startCountdown()">GO!</button>
   </div>
-
   <div id="countdown"></div>
-  <div id="player">
-    <iframe id="spotify-embed"
-      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-      loading="lazy">
-    </iframe>
-  </div>
   <div id="info"></div>
 
   <script>
+    let accessToken = '';
+    let player;
+    let deviceId;
     let tracks = [];
-    let selectedTrack = null;
+    let selectedTrack;
 
-    function extractPlaylistId(url) {
-      const parts = url.split("/playlist/");
-      if (parts.length > 1) {
-        return parts[1].split("?")[0];
-      }
-      return null;
+    function login() {
+      window.location.href = "/login";
     }
 
-    async function loadTracks() {
+    async function loadPlaylist() {
       const url = document.getElementById("playlist-url").value;
-      const playlistId = extractPlaylistId(url);
-      if (!playlistId) return alert("Ogiltig URL");
+      const playlistId = url.split("/playlist/")[1].split("?")[0];
 
       const res = await fetch(`/tracks?playlist_id=${playlistId}`);
       const data = await res.json();
       tracks = data.items.map(item => {
-        const track = item.track;
+        const t = item.track;
         return {
-          artist: track.artists[0].name,
-          title: track.name,
-          year: track.album.release_date.split("-")[0],
-          id: track.id
+          uri: t.uri,
+          name: t.name,
+          artist: t.artists[0].name,
+          year: t.album.release_date.split("-")[0]
         };
       });
 
@@ -122,42 +85,54 @@
       document.getElementById("go-section").style.display = "none";
       const countdown = document.getElementById("countdown");
       countdown.style.display = "block";
-      let num = 3;
-
+      let n = 3;
       const intv = setInterval(() => {
-        countdown.innerText = num;
-        num--;
-        if (num < 0) {
+        countdown.innerText = n;
+        n--;
+        if (n < 0) {
           clearInterval(intv);
           countdown.style.display = "none";
-          playEmbeddedTrack();
+          playRandomTrack();
         }
       }, 1000);
     }
 
-    function playEmbeddedTrack() {
+    function playRandomTrack() {
       selectedTrack = tracks[Math.floor(Math.random() * tracks.length)];
-      const iframe = document.getElementById("spotify-embed");
 
-      iframe.src = `https://open.spotify.com/embed/track/${selectedTrack.id}?autoplay=1&utm_source=generator`;
-
-      document.getElementById("player").style.display = "block";
+      fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ uris: [selectedTrack.uri] }),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      });
 
       setTimeout(() => {
-        const info = document.getElementById("info");
-        info.style.display = "block";
-        info.innerHTML = `<h2>${selectedTrack.artist} – ${selectedTrack.title} (${selectedTrack.year})</h2>`;
+        document.getElementById("info").innerHTML =
+          `<h2>${selectedTrack.artist} – ${selectedTrack.name} (${selectedTrack.year})</h2>`;
       }, 3000);
     }
 
-    window.onload = () => {
-      fetch("/tracks?playlist_id=dummy").then(res => {
-        if (res.status !== 401) {
-          document.getElementById("login").style.display = "none";
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      fetch("/token").then(r => r.json()).then(data => {
+        accessToken = data.access_token;
+
+        player = new Spotify.Player({
+          name: 'Musicas Player',
+          getOAuthToken: cb => { cb(accessToken); },
+          volume: 0.8
+        });
+
+        player.addListener('ready', ({ device_id }) => {
+          deviceId = device_id;
           document.getElementById("main").style.display = "block";
-        }
+        });
+
+        player.connect();
       });
-    }
+    };
   </script>
 </body>
 </html>
