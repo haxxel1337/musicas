@@ -2,17 +2,21 @@ from flask import Flask, request, redirect, session, jsonify
 import requests
 import os
 
-app = Flask(__name__)
+# Gör att /client/index.html fungerar korrekt på Render
+app = Flask(__name__, static_folder="client", static_url_path="/client")
 app.secret_key = "supersecret"
 
+# Spotify OAuth-inställningar (miljövariabler på Render)
 CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.environ.get("SPOTIFY_REDIRECT_URI")
 
+# Startpunkt – serverar index.html från client/
 @app.route("/")
 def index():
-    return redirect("/client/index.html")
+    return app.send_static_file("index.html")
 
+# Steg 1 – Spotify-login
 @app.route("/login")
 def login():
     scope = "user-read-playback-state user-modify-playback-state playlist-read-private"
@@ -22,6 +26,7 @@ def login():
     )
     return redirect(auth_url)
 
+# Steg 2 – Spotify callback
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
@@ -35,8 +40,9 @@ def callback():
     })
     token_info = response.json()
     session['access_token'] = token_info.get("access_token")
-    return redirect("/client/index.html")
+    return redirect("/")
 
+# Returnerar access token till frontend för Spotify Web SDK
 @app.route("/token")
 def token():
     token = session.get("access_token")
@@ -44,6 +50,7 @@ def token():
         return jsonify({"error": "unauthenticated"}), 401
     return jsonify({"access_token": token})
 
+# Hämtar spår från spellista
 @app.route("/tracks")
 def tracks():
     token = session.get("access_token")
@@ -53,6 +60,7 @@ def tracks():
     res = requests.get(url, headers=headers)
     return jsonify(res.json())
 
+# Flask-serverport för Render
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
