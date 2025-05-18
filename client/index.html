@@ -36,6 +36,7 @@
   let trumpetTimeout = null;
   function stopAnswering() {
     if (trumpetTimeout) clearTimeout(trumpetTimeout);
+    clearInterval(timerInterval); answerTimer.classList.add("hidden");
     trumpetTimeout = null;
   }
 
@@ -81,7 +82,8 @@
     <button onclick="nextPlayer()">Nästa spelare</button>
   </div>
 
-  <div id="info" class="hidden"></div>
+  <div id="answer-timer" class="hidden" style="font-size: 32px; margin-top: 20px;"></div>
+<div id="info" class="hidden"></div>
   <div id="scoreboard" class="hidden">
     <h3>Poängställning</h3>
     <table id="score-table"><thead><tr><th>Spelare</th><th>Poäng</th></tr></thead><tbody></tbody></table>
@@ -154,9 +156,18 @@
   function playRandomTrack() {
     selectedTrack = tracks[Math.floor(Math.random() * tracks.length)];
     const iframe = document.getElementById("spotify-embed");
-    iframe.src = `https://open.spotify.com/embed/track/${selectedTrack.id}?autoplay=1`;
+    // använd SDK för uppspelning
+    fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: "PUT",
+      body: JSON.stringify({ uris: [selectedTrack.uri] }),
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
+    });
 
     document.getElementById("player").classList.remove("hidden");
+    document.getElementById("spotify-embed").src = `https://open.spotify.com/embed/track/${selectedTrack.id}`;
     document.getElementById("result-controls").classList.remove("hidden");
 
     if (pauseTimeout) clearTimeout(pauseTimeout);
@@ -166,6 +177,21 @@
 
     pauseTimeout = setTimeout(() => {
     // Efter X sekunder till, spela trumpet om inte stoppat
+    
+    let answerTimer = document.getElementById("answer-timer");
+    answerTimer.classList.remove("hidden");
+    let remaining = delay / 1000;
+    answerTimer.innerText = "Svarstid: " + remaining + " sekunder";
+
+    let timerInterval = setInterval(() => {
+      remaining--;
+      if (remaining >= 0) {
+        answerTimer.innerText = "Svarstid: " + remaining + " sekunder";
+      } else {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+
     trumpetTimeout = setTimeout(() => {
       document.getElementById("trumpet-sound").play();
     }, delay);
@@ -224,6 +250,7 @@
   let trumpetTimeout = null;
   function stopAnswering() {
     if (trumpetTimeout) clearTimeout(trumpetTimeout);
+    clearInterval(timerInterval); answerTimer.classList.add("hidden");
     trumpetTimeout = null;
   }
 
