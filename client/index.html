@@ -40,6 +40,18 @@
     trumpetTimeout = null;
   }
 
+
+  let playerNames = [];
+
+  function renderNameFields() {
+    const container = document.getElementById("player-names");
+    const count = parseInt(document.getElementById("player-count").value);
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      container.innerHTML += `<input type="text" id="player-name-${i}" placeholder="Spelare ${i + 1}" required><br>`;
+    }
+  }
+
 </script>
 </head>
 <body>
@@ -53,9 +65,8 @@
   <div id="setup" class="hidden">
     <input id="playlist-url" placeholder="Spotify playlist-URL" size="40"><br>
     <label>Antal spelare:</label>
-    <select id="player-count">
-      <option>2</option><option>3</option><option>4</option>
-    </select><br>
+    <input type="number" id="player-count" value="2" min="1" max="10" oninput="renderNameFields()"><br>
+    <div id="player-names"></div>
     <label>Svårighet:</label>
     <select id="difficulty-select">
       <option value="easy">Easy (60s)</option>
@@ -104,6 +115,11 @@
     const playlistId = url.split("/playlist/")[1].split("?")[0];
     playerCount = parseInt(document.getElementById("player-count").value);
     difficulty = document.getElementById("difficulty-select").value;
+    playerNames = [];
+    for (let i = 0; i < playerCount; i++) {
+      let nameInput = document.getElementById("player-name-" + i);
+      playerNames.push(nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Spelare " + (i + 1));
+    }
     scores = Array(playerCount).fill(0);
     updateScoreboard();
 
@@ -127,14 +143,14 @@
   }
 
   function updateTurnLabel() {
-    document.getElementById("turn-label").innerHTML = `Spelare ${currentPlayer + 1}'s tur`;
+    document.getElementById("turn-label").innerHTML = `${playerNames[currentPlayer]}'s tur`;
   }
 
   function updateScoreboard() {
     const tbody = document.querySelector("#score-table tbody");
     tbody.innerHTML = "";
     scores.forEach((score, i) => {
-      tbody.innerHTML += `<tr><td class="${i === currentPlayer ? 'active-player' : ''}">Spelare ${i + 1}</td><td>${score}</td></tr>`;
+      tbody.innerHTML += `<tr><td class="${i === currentPlayer ? 'active-player' : ''}">${playerNames[i]}</td><td>${score}</td></tr>`;
     });
   }
 
@@ -253,6 +269,18 @@
     if (trumpetTimeout) clearTimeout(trumpetTimeout);
     clearInterval(timerInterval); answerTimer.classList.add("hidden");
     trumpetTimeout = null;
+  }
+
+
+  let playerNames = [];
+
+  function renderNameFields() {
+    const container = document.getElementById("player-names");
+    const count = parseInt(document.getElementById("player-count").value);
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      container.innerHTML += `<input type="text" id="player-name-${i}" placeholder="Spelare ${i + 1}" required><br>`;
+    }
   }
 
 </script>
