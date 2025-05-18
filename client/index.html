@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Musicas – Flerspelarläge + Svårighet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button, select {
+      font-size: 16px;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background-color: #1db954;
+      color: white;
+      font-weight: bold;
+    }
+    #countdown { font-size: 72px; margin: 30px 0; }
+    #info, #player, #next-turn, #scoreboard, #result-controls { margin-top: 20px; }
+    .hidden { display: none; }
+    table { width: 100%; max-width: 400px; margin: auto; border-collapse: collapse; }
+    th, td { padding: 8px; }
+    th { border-bottom: 1px solid #aaa; }
+    .active-player { color: #1db954; font-weight: bold; }
+  </style>
+  <script src="https://sdk.scdn.co/spotify-player.js">
+  let trumpetTimeout = null;
+  function stopAnswering() {
+    if (trumpetTimeout) clearTimeout(trumpetTimeout);
+    trumpetTimeout = null;
+  }
+
+</script>
+</head>
+<body>
+  <h1>Musicas – Flerspelarläge</h1>
+
+  <div id="login">
+    <button onclick="login()">Logga in med Spotify</button>
+  </div>
+
+  <div id="setup" class="hidden">
+    <input id="playlist-url" placeholder="Spotify playlist-URL" size="40"><br>
+    <label>Antal spelare:</label>
+    <select id="player-count">
+      <option>2</option><option>3</option><option>4</option>
+    </select><br>
+    <label>Svårighet:</label>
+    <select id="difficulty-select">
+      <option value="easy">Easy (60s)</option>
+      <option value="mid">Mid (45s)</option>
+      <option value="hard">Hard (30s)</option>
+    </select><br>
+    <button onclick="startGame()">Starta spel</button>
+  </div>
+
+  <div id="go-section" class="hidden">
+    <h2 id="turn-label"></h2>
+    <button onclick="startCountdown()">GO!</button>
+  </div>
+
+  <div id="countdown" class="hidden"></div>
+  <div id="player" class="hidden">
+    <iframe id="spotify-embed" allow="autoplay; clipboard-write; encrypted-media;" width="100%" height="152" frameborder="0"></iframe>
+  </div>
+
+  <div id="result-controls" class="hidden">
+    <button onclick="stopAnswering()">Stopp (jag har svarat!)</button>
+    <audio id="trumpet-sound" src="/client/Trumpet.m4a" preload="auto"></audio>
+    <button onclick="showInfo()">Visa facit</button>
+    <button onclick="scorePoint()">+1 poäng</button>
+    <button onclick="nextPlayer()">Nästa spelare</button>
+  </div>
+
+  <div id="info" class="hidden"></div>
+  <div id="scoreboard" class="hidden">
+    <h3>Poängställning</h3>
+    <table id="score-table"><thead><tr><th>Spelare</th><th>Poäng</th></tr></thead><tbody></tbody></table>
+  </div>
+
+<script>
+  let accessToken = '', deviceId = '', player;
+  let tracks = [], selectedTrack;
+  let currentPlayer = 0, playerCount = 2, scores = [];
+  let difficulty = 'easy';
+  let pauseTimeout = null;
+
+  function login() { window.location.href = "/login"; }
+
+  async function startGame() {
+    const url = document.getElementById("playlist-url").value;
+    const playlistId = url.split("/playlist/")[1].split("?")[0];
+    playerCount = parseInt(document.getElementById("player-count").value);
+    difficulty = document.getElementById("difficulty-select").value;
+    scores = Array(playerCount).fill(0);
+    updateScoreboard();
+
+    const res = await fetch(`/tracks?playlist_id=${playlistId}`);
+    const data = await res.json();
+    tracks = data.items.map(item => {
+      const t = item.track;
+      return {
+        uri: t.uri,
+        id: t.id,
+        name: t.name,
+        artist: t.artists[0].name,
+        year: t.album.release_date.split("-")[0]
+      };
+    });
+
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("scoreboard").classList.remove("hidden");
+    document.getElementById("go-section").classList.remove("hidden");
+    updateTurnLabel();
+  }
+
+  function updateTurnLabel() {
+    document.getElementById("turn-label").innerHTML = `Spelare ${currentPlayer + 1}'s tur`;
+  }
+
+  function updateScoreboard() {
+    const tbody = document.querySelector("#score-table tbody");
+    tbody.innerHTML = "";
+    scores.forEach((score, i) => {
+      tbody.innerHTML += `<tr><td class="${i === currentPlayer ? 'active-player' : ''}">Spelare ${i + 1}</td><td>${score}</td></tr>`;
+    });
+  }
+
+  function startCountdown() {
+    document.getElementById("go-section").classList.add("hidden");
+    const countdown = document.getElementById("countdown");
+    countdown.classList.remove("hidden");
+    let n = 3;
+    const intv = setInterval(() => {
+      countdown.textContent = n;
+      n--;
+      if (n < 0) {
+        clearInterval(intv);
+        countdown.classList.add("hidden");
+        playRandomTrack();
+      }
+    }, 1000);
+  }
+
+  function playRandomTrack() {
+    selectedTrack = tracks[Math.floor(Math.random() * tracks.length)];
+    const iframe = document.getElementById("spotify-embed");
+    iframe.src = `https://open.spotify.com/embed/track/${selectedTrack.id}?autoplay=1`;
+
+    document.getElementById("player").classList.remove("hidden");
+    document.getElementById("result-controls").classList.remove("hidden");
+
+    if (pauseTimeout) clearTimeout(pauseTimeout);
+    let delay = 60000;
+    if (difficulty === "mid") delay = 45000;
+    if (difficulty === "hard") delay = 30000;
+
+    pauseTimeout = setTimeout(() => {
+    // Efter X sekunder till, spela trumpet om inte stoppat
+    trumpetTimeout = setTimeout(() => {
+      document.getElementById("trumpet-sound").play();
+    }, delay);
+
+      fetch("https://api.spotify.com/v1/me/player/pause", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    }, delay);
+  }
+
+  function showInfo() {
+    const info = document.getElementById("info");
+    info.classList.remove("hidden");
+    info.innerHTML = `<h2>${selectedTrack.artist} – ${selectedTrack.name} (${selectedTrack.year})</h2>`;
+  }
+
+  function scorePoint() {
+    scores[currentPlayer]++;
+    updateScoreboard();
+  }
+
+  function nextPlayer() {
+    document.getElementById("player").classList.add("hidden");
+    document.getElementById("info").classList.add("hidden");
+    document.getElementById("result-controls").classList.add("hidden");
+    currentPlayer = (currentPlayer + 1) % playerCount;
+    updateTurnLabel();
+    document.getElementById("go-section").classList.remove("hidden");
+  }
+
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    fetch("/token").then(r => r.json()).then(data => {
+      if (data.access_token) {
+        accessToken = data.access_token;
+        document.getElementById("login").style.display = "none";
+        document.getElementById("setup").classList.remove("hidden");
+
+        player = new Spotify.Player({
+          name: 'Musicas Player',
+          getOAuthToken: cb => cb(accessToken),
+          volume: 0.8
+        });
+
+        player.addListener('ready', ({ device_id }) => {
+          deviceId = device_id;
+        });
+
+        player.connect();
+      }
+    });
+  };
+
+  let trumpetTimeout = null;
+  function stopAnswering() {
+    if (trumpetTimeout) clearTimeout(trumpetTimeout);
+    trumpetTimeout = null;
+  }
+
+</script>
+</body>
+</html>
