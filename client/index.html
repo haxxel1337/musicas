@@ -55,7 +55,7 @@
 </script>
 </head>
 <body>
-  <img src="/client/musicas.png" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
+  <img src="client/musicas.png" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
 <h1 style="margin-top: 10px;">Musicas</h1>
 
   <div id="login">
@@ -125,6 +125,10 @@
 
     const res = await fetch(`/tracks?playlist_id=${playlistId}`);
     const data = await res.json();
+    if (!data.items) {
+      alert("Kunde inte ladda spellistan. Är du inloggad med Spotify Premium?");
+      return;
+    }
     tracks = data.items.map(item => {
       const t = item.track;
       return {
@@ -244,6 +248,10 @@
 
   window.onSpotifyWebPlaybackSDKReady = () => {
     fetch("/token").then(r => r.json()).then(data => {
+      if (!data.access_token) {
+        alert("Spotify-token saknas eller ogiltig. Logga in igen.");
+        return;
+      }
       if (data.access_token) {
         accessToken = data.access_token;
         document.getElementById("login").style.display = "none";
