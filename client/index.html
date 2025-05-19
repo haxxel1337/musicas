@@ -217,7 +217,7 @@
       document.getElementById("trumpet-sound").play();
     }, delay);
 
-      fetch("https://api.spotify.com/v1/me/player/pause", {
+      fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${accessToken}`
