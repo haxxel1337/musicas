@@ -3,7 +3,7 @@ import requests
 import os
 
 app = Flask(__name__, static_folder="client", static_url_path="/musicas/client")
-app.secret_key = "supersecret"
+app.secret_key = os.environ.get("SECRET_KEY") or "supersecret"
 
 CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
@@ -23,6 +23,7 @@ def login():
         "https://accounts.spotify.com/authorize"
         f"?response_type=code&client_id={CLIENT_ID}&scope={scope}&redirect_uri={REDIRECT_URI}"
     )
+    print("LOGIN: CLIENT_ID", CLIENT_ID, "REDIRECT_URI", REDIRECT_URI)
     return redirect(auth_url)
 
 @app.route("/callback")
@@ -37,11 +38,14 @@ def callback():
         "client_secret": CLIENT_SECRET
     })
     token_info = response.json()
+    print("TOKEN_INFO:", token_info)  # DEBUG
     session['access_token'] = token_info.get("access_token")
+    print("SESSION AFTER CALLBACK:", dict(session))  # DEBUG
     return redirect("/")
 
 @app.route("/token")
 def token():
+    print("SESSION IN /TOKEN:", dict(session))  # DEBUG
     token = session.get("access_token")
     if not token:
         return jsonify({"error": "unauthenticated"}), 401
@@ -60,8 +64,14 @@ def trackinfo(track_id):
 @app.route("/logout")
 def logout():
     session.clear()
+    print("SESSION CLEARED")
     return redirect("/")
+
+@app.route("/debug-session")
+def debug_session():
+    return jsonify(dict(session))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    print("cwd:", os.getcwd())
     app.run(host="0.0.0.0", port=port)
