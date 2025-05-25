@@ -47,7 +47,6 @@ const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
 const loginBtnLink = document.getElementById('login-btn-link');
-const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
 const historyLog = document.getElementById('history-log');
 
@@ -60,7 +59,7 @@ if (laterBtn) laterBtn.addEventListener('click', () => evaluateGuess('later'));
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
 if (loginBtn) loginBtn.addEventListener('click', e => { e.preventDefault(); window.location.href = "/login"; });
 if (loginBtnLink) loginBtnLink.addEventListener('click', () => window.location.href = "/login");
-if (facitBtn) facitBtn.addEventListener('click', showFacit);
+if (facitBtn) // facitBtn listener removed
 if (playAgainBtn) playAgainBtn.addEventListener('click', resetGame);
 if (gameOverBtn) gameOverBtn.addEventListener('click', endGame);
 if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
@@ -133,7 +132,7 @@ function fetchPlaylistTracks(url) {
 function prepareTurn() {
   if (!gameActive) return;
   stopAnswering();
-  facitBtn.classList.add('hidden');
+  // facitBtn removed
   facitInfo.classList.add('hidden');
   currentTrackYear = null;
 
@@ -150,9 +149,9 @@ function prepareTurn() {
 
 function startTurn() {
   goBtn.classList.add('hidden');
-  facitBtn.classList.add('hidden');
+  // facitBtn removed
   facitInfo.classList.add('hidden');
-  infoEl.textContent = `${players[currentPlayer]} is listening...`;
+  infoEl.innerHTML = `<div>${players[currentPlayer]} is listening...<br>Your reference year is ${assignedYears[currentPlayer]}</div>`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
   countdownEl.textContent = musicDuration;
@@ -184,9 +183,9 @@ function startTurn() {
 
 function startAnswerTimer() {
   let answerTime = secondsPerDifficulty[difficulty];
-  infoEl.textContent = "Now answer!";
+  infoEl.innerHTML = `<div>Is it earlier or later than ${assignedYears[currentPlayer]}?</div>`;
   countdownEl.textContent = answerTime;
-  facitBtn.classList.remove('hidden');
+  // facitBtn removed
   earlierBtn.classList.remove('hidden');
   laterBtn.classList.remove('hidden');
   forceAnswerBtn.classList.add('hidden');
@@ -249,8 +248,9 @@ function evaluateGuess(direction) {
         return;
       }
 
-      facitBtn.classList.remove('hidden');
+      // facitBtn removed
       facitInfo.classList.add('hidden');
+      showFacit();
       nextTurnBtn.classList.remove('hidden');
     })
     .catch(() => {
@@ -267,12 +267,13 @@ function stopAnswering() {
   laterBtn.classList.add('hidden');
   forceAnswerBtn.classList.add('hidden');
   if (spotifyPlayer) spotifyPlayer.pause().catch(() => {});
-  nextTurnBtn.classList.remove('hidden');
+  showFacit();
+      nextTurnBtn.classList.remove('hidden');
 }
 
 function nextTurn() {
   stopAnswering();
-  facitBtn.classList.add('hidden');
+  // facitBtn removed
   facitInfo.classList.add('hidden');
 
   if (currentPlayer === players.length - 1) {
