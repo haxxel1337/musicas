@@ -69,7 +69,7 @@ if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
   startAnswerTimer();
 });
 
-// --- Login check ---
+// --- Login check --- 
 function checkAuthAndShow() {
   fetch('/token')
     .then(res => res.json())
