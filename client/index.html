@@ -27,13 +27,18 @@
       cursor: pointer;
     }
     #countdown { font-size: 72px; margin: 30px 0; }
-    #info, #player, #next-turn, #scoreboard, #result-controls, #history-log { margin-top: 20px; }
+    #info, #player, #next-turn, #scoreboard, #result-controls, #history-log {
+      margin-top: 20px;
+    }
     .hidden { display: none; }
     table { width: 100%; max-width: 400px; margin: auto; border-collapse: collapse; }
     th, td { padding: 8px; }
     th { border-bottom: 1px solid #aaa; }
     .active-player { color: #1db954; font-weight: bold; }
-    #facit-info img { box-shadow: 0 4px 16px #0008; margin-bottom: 8px; }
+    #facit-info img {
+      box-shadow: 0 4px 16px #0008;
+      margin-bottom: 8px;
+    }
     #facit-info { margin-top: 16px; }
     #history-log table { margin-top: 10px; font-size: 14px; }
   </style>
@@ -63,17 +68,23 @@
 
   <div id="game-controls" class="hidden">
     <div id="info"></div>
+
     <button id="go-btn" class="hidden">GO!</button>
     <div id="answer-timer" class="hidden">
       <span id="countdown">60</span>
     </div>
+
+    <button id="force-answer-btn" class="hidden">Stop Music & Answer Now</button>
     <button id="earlier-btn" class="hidden">Earlier</button>
     <button id="later-btn" class="hidden">Later</button>
+
     <button id="next-turn" class="hidden">Next Player</button>
     <button id="facit-btn" class="hidden">Show Answer</button>
     <div id="facit-info" class="hidden"></div>
+
     <div id="scoreboard"></div>
     <div id="history-log"></div>
+
     <button id="play-again-btn" class="hidden">Play Again</button>
     <button id="game-over-btn" class="hidden">Game Over</button>
   </div>
