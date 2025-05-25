@@ -120,7 +120,7 @@ function startGame() {
 }
 
 function fetchPlaylistTracks(url) {
-  let match = url.match(/playlist[/:]([a-zA-Z0-9]+)/);
+  let match = url.match(/(?:playlist\/|playlist:)([a-zA-Z0-9]+)/);
   if (!match) return Promise.resolve([]);
   let playlistId = match[1];
 
