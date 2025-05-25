@@ -47,21 +47,21 @@ def token():
         return jsonify({"error": "unauthenticated"}), 401
     return jsonify({"access_token": token})
 
-@app.route("/tracks")
-def tracks():
+@app.route("/trackinfo/<track_id>")
+def trackinfo(track_id):
     token = session.get("access_token")
-    playlist_id = request.args.get("playlist_id")
+    if not token:
+        return jsonify({"error": "unauthenticated"}), 401
     headers = {"Authorization": f"Bearer {token}"}
-    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-    res = requests.get(url, headers=headers)
-    return jsonify(res.json())
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    url = f"https://api.spotify.com/v1/tracks/{track_id}"
+    r = requests.get(url, headers=headers)
+    return jsonify(r.json())
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
