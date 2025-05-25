@@ -23,7 +23,6 @@ def login():
         "https://accounts.spotify.com/authorize"
         f"?response_type=code&client_id={CLIENT_ID}&scope={scope}&redirect_uri={REDIRECT_URI}"
     )
-    print("LOGIN: CLIENT_ID", CLIENT_ID, "REDIRECT_URI", REDIRECT_URI)
     return redirect(auth_url)
 
 @app.route("/callback")
@@ -38,14 +37,11 @@ def callback():
         "client_secret": CLIENT_SECRET
     })
     token_info = response.json()
-    print("TOKEN_INFO:", token_info)  # DEBUG
     session['access_token'] = token_info.get("access_token")
-    print("SESSION AFTER CALLBACK:", dict(session))  # DEBUG
     return redirect("/")
 
 @app.route("/token")
 def token():
-    print("SESSION IN /TOKEN:", dict(session))  # DEBUG
     token = session.get("access_token")
     if not token:
         return jsonify({"error": "unauthenticated"}), 401
@@ -61,10 +57,33 @@ def trackinfo(track_id):
     r = requests.get(url, headers=headers)
     return jsonify(r.json())
 
+@app.route("/playlist/<playlist_id>")
+def playlist_tracks(playlist_id):
+    token = session.get("access_token")
+    if not token:
+        return jsonify({"error": "unauthenticated"}), 401
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=items(track(uri,name,type,artists,album,external_urls))&limit=100"
+    r = requests.get(url, headers=headers)
+    data = r.json()
+    tracks = []
+    if "items" in data:
+        for item in data["items"]:
+            t = item["track"]
+            if t and t.get("uri") and t.get("type") == "track":
+                tracks.append({
+                    "uri": t["uri"],
+                    "name": t["name"],
+                    "type": t["type"],
+                    "artists": t["artists"],
+                    "album": t["album"],
+                    "external_urls": t["external_urls"]
+                })
+    return jsonify({"tracks": tracks})
+
 @app.route("/logout")
 def logout():
     session.clear()
-    print("SESSION CLEARED")
     return redirect("/")
 
 @app.route("/debug-session")
@@ -73,5 +92,4 @@ def debug_session():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print("cwd:", os.getcwd())
     app.run(host="0.0.0.0", port=port)
