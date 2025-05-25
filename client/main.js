@@ -17,6 +17,8 @@ let playlistUrl = '';
 let deviceReady = false;
 let deviceId = null;
 
+let playlistTracks = [];
+
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
 // --- DOM ELEMENTS ---
@@ -84,10 +86,44 @@ function startGame() {
   round = 1;
   gameActive = true;
   hideError();
-  setupDiv.classList.add('hidden');
-  gameControls.classList.remove('hidden');
-  renderScoreboard();
-  prepareTurn();
+
+  // If playlist provided, fetch tracks, then start game
+  if (playlistUrl) {
+    fetchPlaylistTracks(playlistUrl).then(tracks => {
+      if (tracks.length > 0) {
+        playlistTracks = tracks;
+        setupDiv.classList.add('hidden');
+        gameControls.classList.remove('hidden');
+        renderScoreboard();
+        prepareTurn();
+      } else {
+        showError("Could not find any tracks in that playlist.");
+      }
+    });
+  } else {
+    // fallback to dummy
+    playlistTracks = [];
+    setupDiv.classList.add('hidden');
+    gameControls.classList.remove('hidden');
+    renderScoreboard();
+    prepareTurn();
+  }
+}
+
+function fetchPlaylistTracks(url) {
+  // Extract playlist ID from URL
+  let match = url.match(/playlist[/:]([a-zA-Z0-9]+)/);
+  if (!match) return Promise.resolve([]);
+  let playlistId = match[1];
+
+  return fetch(`/playlist/${playlistId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.tracks || !Array.isArray(data.tracks)) return [];
+      // Return only playable Spotify track URIs
+      return data.tracks.filter(t => t && t.uri && t.type === "track");
+    })
+    .catch(() => []);
 }
 
 function prepareTurn() {
@@ -114,7 +150,14 @@ function startTurn() {
   stopBtn.disabled = false;
   nextTurnBtn.classList.add('hidden');
 
-  playSpotifyTrack(dummyTrackUri); // You can replace this with a playlist track
+  // --- Use random playlist track if exists ---
+  let trackUri = dummyTrackUri;
+  if (playlistTracks.length > 0) {
+    const randIdx = Math.floor(Math.random() * playlistTracks.length);
+    trackUri = playlistTracks[randIdx].uri;
+  }
+  playSpotifyTrack(trackUri);
+
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     musicDuration--;
