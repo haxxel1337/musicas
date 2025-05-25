@@ -1,4 +1,15 @@
 
+// ... Allt som innan (facit, timers, osv) ...
+
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    window.location.href = "/logout";
+  });
+}
+
+// --- (klistra in senaste main_js_facit från tidigare steg här, men lägg till ovan kod högst upp) ---
+
 let trumpetTimeout = null;
 let timerInterval = null;
 let timeLeft = 30;
@@ -12,6 +23,7 @@ let difficulty = 'Easy';
 const secondsPerDifficulty = { Easy: 30, Mid: 20, Hard: 10 };
 
 let spotifyPlayer = null;
+let currentTrackUri = null;
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
 const playerNameInput = document.getElementById('player-names');
@@ -30,6 +42,8 @@ const errorEl = document.getElementById('error-message');
 const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
+const facitBtn = document.getElementById('facit-btn');
+const facitInfo = document.getElementById('facit-info');
 
 if (startBtn) startBtn.addEventListener('click', startGame);
 if (difficultySelect) difficultySelect.addEventListener('change', e => {
@@ -39,6 +53,7 @@ if (goBtn) goBtn.addEventListener('click', startTurn);
 if (stopBtn) stopBtn.addEventListener('click', stopAnswering);
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
 if (loginBtn) loginBtn.addEventListener('click', login);
+if (facitBtn) facitBtn.addEventListener('click', showFacit);
 
 function login() {
   window.location.href = "/login";
@@ -61,6 +76,8 @@ function startGame() {
 
 function prepareTurn() {
   stopAnswering();
+  facitBtn.classList.add('hidden');
+  facitInfo.classList.add('hidden');
   infoEl.textContent = `Det är ${players[currentPlayer]}'s tur! Tryck på GO! för att starta låten.`;
   goBtn.classList.remove('hidden');
   stopBtn.classList.add('hidden');
@@ -70,6 +87,8 @@ function prepareTurn() {
 
 function startTurn() {
   goBtn.classList.add('hidden');
+  facitBtn.classList.add('hidden');
+  facitInfo.classList.add('hidden');
   infoEl.textContent = `${players[currentPlayer]} lyssnar...`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
@@ -96,6 +115,8 @@ function startAnswerTimer() {
   let answerTime = secondsPerDifficulty[difficulty];
   infoEl.textContent = `Svara nu!`;
   countdownEl.textContent = answerTime;
+  facitBtn.classList.remove('hidden');
+  facitInfo.classList.add('hidden');
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     answerTime--;
@@ -116,6 +137,7 @@ function stopAnswering() {
   answerTimer.classList.add('hidden');
   stopBtn.disabled = true;
   stopBtn.classList.add('hidden');
+  facitBtn.classList.remove('hidden');
   if (spotifyPlayer) {
     spotifyPlayer.pause().catch(() => {});
   }
@@ -139,6 +161,8 @@ function stopTrumpet() {
 
 function nextTurn() {
   stopAnswering();
+  facitBtn.classList.add('hidden');
+  facitInfo.classList.add('hidden');
   currentPlayer = (currentPlayer + 1) % players.length;
   if (currentPlayer === 0) round++;
   renderScoreboard();
@@ -181,6 +205,7 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 };
 
 function playSpotifyTrack(uri) {
+  currentTrackUri = uri;
   if (spotifyPlayer) {
     spotifyPlayer._options.getOAuthToken(access_token => {
       fetch(
@@ -196,4 +221,28 @@ function playSpotifyTrack(uri) {
       );
     });
   }
+}
+
+function showFacit() {
+  let trackId = null;
+  if (currentTrackUri && currentTrackUri.startsWith("spotify:track:")) {
+    trackId = currentTrackUri.split(":")[2];
+  }
+  if (!trackId) return;
+
+  fetch(`/trackinfo/${trackId}`)
+    .then(res => res.json())
+    .then(data => {
+      let year = "-";
+      if (data.album && data.album.release_date) {
+        year = data.album.release_date.slice(0, 4);
+      }
+      facitInfo.innerHTML = `
+        <img src="${data.album.images[0].url}" alt="Cover" style="max-width:150px;border-radius:8px;"><br>
+        <div style="font-size:1.1em;margin-top:10px;font-weight:bold;">
+          ${data.artists.map(a => a.name).join(", ")} – ${data.name} – ${year}
+        </div>
+      `;
+      facitInfo.classList.remove('hidden');
+    });
 }
