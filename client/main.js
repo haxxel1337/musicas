@@ -14,6 +14,8 @@ const secondsPerDifficulty = { Easy: 60, Mid: 45, Hard: 30 };
 let spotifyPlayer = null;
 let currentTrackUri = null;
 let playlistUrl = '';
+let deviceReady = false;
+let deviceId = null;
 
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
@@ -111,7 +113,7 @@ function startTurn() {
   stopBtn.classList.remove('hidden');
   stopBtn.disabled = false;
   nextTurnBtn.classList.add('hidden');
-  
+
   playSpotifyTrack(dummyTrackUri); // You can replace this with a playlist track
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -204,6 +206,7 @@ function hideError() {
   errorEl.classList.add('hidden');
 }
 
+// --- SPOTIFY WEB PLAYBACK SDK INIT ---
 window.onSpotifyWebPlaybackSDKReady = () => {
   fetch('/token')
     .then(res => res.json())
@@ -213,6 +216,12 @@ window.onSpotifyWebPlaybackSDKReady = () => {
         getOAuthToken: cb => { cb(data.access_token); },
         volume: 0.5
       });
+      spotifyPlayer.addListener('ready', ({ device_id }) => {
+        window.spotifyDeviceId = device_id;
+        deviceReady = true;
+        deviceId = device_id;
+        console.log('Ready with Device ID', device_id);
+      });
       spotifyPlayer.connect();
       window.spotifyPlayer = spotifyPlayer;
     });
@@ -220,10 +229,12 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 
 function playSpotifyTrack(uri) {
   currentTrackUri = uri;
-  if (spotifyPlayer) {
+  // Wait until device_id is available
+  if (spotifyPlayer && (deviceReady || window.spotifyDeviceId)) {
+    const id = window.spotifyDeviceId || deviceId;
     spotifyPlayer._options.getOAuthToken(access_token => {
       fetch(
-        `https://api.spotify.com/v1/me/player/play?device_id=${spotifyPlayer._options.id}`,
+        `https://api.spotify.com/v1/me/player/play?device_id=${id}`,
         {
           method: 'PUT',
           body: JSON.stringify({ uris: [uri] }),
@@ -234,6 +245,9 @@ function playSpotifyTrack(uri) {
         }
       );
     });
+  } else {
+    // Not ready yet, try again after a moment
+    setTimeout(() => playSpotifyTrack(uri), 500);
   }
 }
 
