@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Musicas</title>
+  <title>Musicas – Flerspelarläge + Svårighet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -46,15 +46,17 @@
     #facit-info { margin-top: 16px; }
   </style>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
-  <script src="client/main.js"></script>
+  <script src="/musicas/client/main.js"></script>
 </head>
 <body>
   <button id="logout-btn">Logga ut</button>
-  <img src="client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
+  <img src="/musicas/client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
   <h1 style="margin-top: 10px;">Musicas</h1>
 
   <div id="login">
-    <button id="login-btn">Logga in med Spotify</button>
+    <a href="/login" id="login-btn-link" style="text-decoration:none;">
+      <button id="login-btn">Logga in med Spotify</button>
+    </a>
   </div>
 
   <div id="setup" class="hidden">
@@ -79,7 +81,7 @@
     <div id="facit-info" class="hidden"></div>
     <div id="scoreboard"></div>
   </div>
-  <audio id="trumpet-audio" src="client/Trumpet.m4a" preload="auto"></audio>
+  <audio id="trumpet-audio" src="/musicas/client/Trumpet.m4a" preload="auto"></audio>
   <div id="error-message" class="hidden"></div>
 </body>
 </html>
