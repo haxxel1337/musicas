@@ -1,8 +1,7 @@
-
-// --- SPELSTATE & SPOTIFY ---
+// --- GAME STATE & SPOTIFY ---
 let trumpetTimeout = null;
 let timerInterval = null;
-let timeLeft = 30;
+let timeLeft = 60;
 let currentPlayer = 0;
 let players = [];
 let scores = [];
@@ -10,14 +9,17 @@ let round = 1;
 let gameActive = false;
 
 let difficulty = 'Easy';
-const secondsPerDifficulty = { Easy: 30, Mid: 20, Hard: 10 };
+const secondsPerDifficulty = { Easy: 60, Mid: 45, Hard: 30 };
 
 let spotifyPlayer = null;
 let currentTrackUri = null;
+let playlistUrl = '';
+
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
 // --- DOM ELEMENTS ---
 const playerNameInput = document.getElementById('player-names');
+const playlistInput = document.getElementById('playlist-url');
 const startBtn = document.getElementById('start-btn');
 const difficultySelect = document.getElementById('difficulty');
 const gameControls = document.getElementById('game-controls');
@@ -36,9 +38,8 @@ const loginBtn = document.getElementById('login-btn');
 const loginBtnLink = document.getElementById('login-btn-link');
 const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
-const logoutBtn = document.getElementById('logout-btn');
 
-// --- LOGIN/LOGOUT FLOW ---
+// --- LOGIN FLOW ---
 function checkAuthAndShow() {
   fetch('/token')
     .then(res => res.json())
@@ -69,12 +70,12 @@ if (loginBtnLink) loginBtnLink.addEventListener('click', function(e) {
   window.location.href = "/login";
 });
 if (facitBtn) facitBtn.addEventListener('click', showFacit);
-if (logoutBtn) logoutBtn.addEventListener('click', () => window.location.href = "/logout");
 
 // --- GAME LOGIC ---
 function startGame() {
   const names = playerNameInput.value.split(',').map(n => n.trim()).filter(Boolean);
-  if (names.length < 1) return showError("Ange minst ett namn (komma-separerat).");
+  playlistUrl = playlistInput.value.trim();
+  if (names.length < 1) return showError("Please enter at least one player (comma separated).");
   players = names;
   scores = Array(players.length).fill(0);
   currentPlayer = 0;
@@ -91,7 +92,7 @@ function prepareTurn() {
   stopAnswering();
   facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
-  infoEl.textContent = `Det är ${players[currentPlayer]}'s tur! Tryck på GO! för att starta låten.`;
+  infoEl.textContent = `${players[currentPlayer]}'s turn! Press GO! to start the song.`;
   goBtn.classList.remove('hidden');
   stopBtn.classList.add('hidden');
   answerTimer.classList.add('hidden');
@@ -102,7 +103,7 @@ function startTurn() {
   goBtn.classList.add('hidden');
   facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
-  infoEl.textContent = `${players[currentPlayer]} lyssnar...`;
+  infoEl.textContent = `${players[currentPlayer]} is listening...`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
   countdownEl.textContent = musicDuration;
@@ -111,7 +112,7 @@ function startTurn() {
   stopBtn.disabled = false;
   nextTurnBtn.classList.add('hidden');
   
-  playSpotifyTrack(dummyTrackUri);
+  playSpotifyTrack(dummyTrackUri); // You can replace this with a playlist track
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     musicDuration--;
@@ -126,7 +127,7 @@ function startTurn() {
 
 function startAnswerTimer() {
   let answerTime = secondsPerDifficulty[difficulty];
-  infoEl.textContent = `Svara nu!`;
+  infoEl.textContent = "Now answer!";
   countdownEl.textContent = answerTime;
   facitBtn.classList.remove('hidden');
   facitInfo.classList.add('hidden');
@@ -137,7 +138,7 @@ function startAnswerTimer() {
     if (answerTime <= 0) {
       clearInterval(timerInterval);
       stopAnswering();
-      infoEl.textContent = `${players[currentPlayer]} hann inte svara!`;
+      infoEl.textContent = `${players[currentPlayer]} didn't answer in time!`;
       playTrumpet(0);
       setTimeout(nextTurn, 2000);
     }
@@ -183,7 +184,7 @@ function nextTurn() {
 }
 
 function renderScoreboard() {
-  let html = `<table><tr><th>Spelare</th><th>Poäng</th></tr>`;
+  let html = `<table><tr><th>Player</th><th>Points</th></tr>`;
   players.forEach((player, idx) => {
     html += `<tr>
       <td class="${idx === currentPlayer ? 'active-player' : ''}">${player}</td>
@@ -246,6 +247,11 @@ function showFacit() {
   fetch(`/trackinfo/${trackId}`)
     .then(res => res.json())
     .then(data => {
+      if (!data.album || !data.album.images) {
+        facitInfo.innerHTML = "Could not fetch track info.";
+        facitInfo.classList.remove('hidden');
+        return;
+      }
       let year = "-";
       if (data.album && data.album.release_date) {
         year = data.album.release_date.slice(0, 4);
@@ -256,6 +262,10 @@ function showFacit() {
           ${data.artists.map(a => a.name).join(", ")} – ${data.name} – ${year}
         </div>
       `;
+      facitInfo.classList.remove('hidden');
+    })
+    .catch(() => {
+      facitInfo.innerHTML = "Could not fetch track info.";
       facitInfo.classList.remove('hidden');
     });
 }
