@@ -27,6 +27,10 @@
       cursor: pointer;
     }
     #countdown { font-size: 72px; margin: 30px 0; }
+    #reference-year {
+      font-size: 20px;
+      margin-top: 10px;
+    }
     #info, #player, #next-turn, #scoreboard, #result-controls, #history-log {
       margin-top: 20px;
     }
@@ -71,6 +75,7 @@
 
     <button id="go-btn" class="hidden">GO!</button>
     <div id="answer-timer" class="hidden">
+      <div id="reference-year"></div>
       <span id="countdown">60</span>
     </div>
 
@@ -79,7 +84,6 @@
     <button id="later-btn" class="hidden">Later</button>
 
     <button id="next-turn" class="hidden">Next Player</button>
-    <button id="facit-btn" class="hidden">Show Answer</button>
     <div id="facit-info" class="hidden"></div>
 
     <div id="scoreboard"></div>
