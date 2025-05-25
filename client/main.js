@@ -1,3 +1,4 @@
+
 // --- SPELSTATE & SPOTIFY ---
 let trumpetTimeout = null;
 let timerInterval = null;
@@ -8,11 +9,11 @@ let scores = [];
 let round = 1;
 let gameActive = false;
 
-let difficulty = 'Easy'; // Default
+let difficulty = 'Easy';
 const secondsPerDifficulty = { Easy: 30, Mid: 20, Hard: 10 };
 
-let spotifyPlayer = null; // Global Spotify Player
-const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl'; // EXEMPEL – byt mot din egen låt
+let spotifyPlayer = null;
+const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
 // --- DOM ELEMENTS ---
 const playerNameInput = document.getElementById('player-names');
@@ -29,15 +30,22 @@ const scoreboardEl = document.getElementById('scoreboard');
 const trumpetAudio = document.getElementById('trumpet-audio');
 const errorEl = document.getElementById('error-message');
 const setupDiv = document.getElementById('setup');
+const loginDiv = document.getElementById('login');
+const loginBtn = document.getElementById('login-btn');
 
 // --- EVENTS ---
-startBtn.addEventListener('click', startGame);
-difficultySelect.addEventListener('change', e => {
+if (startBtn) startBtn.addEventListener('click', startGame);
+if (difficultySelect) difficultySelect.addEventListener('change', e => {
   difficulty = e.target.value;
 });
-goBtn.addEventListener('click', startTurn); // OBS! Musik och timer startar här!
-stopBtn.addEventListener('click', () => stopAnswering(true));
-nextTurnBtn.addEventListener('click', nextTurn);
+if (goBtn) goBtn.addEventListener('click', startTurn);
+if (stopBtn) stopBtn.addEventListener('click', stopAnswering);
+if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
+if (loginBtn) loginBtn.addEventListener('click', login);
+
+function login() {
+  window.location.href = "/login";
+}
 
 // --- GAME LOGIC ---
 function startGame() {
@@ -55,7 +63,6 @@ function startGame() {
   prepareTurn();
 }
 
-// Nu visas GO!-knappen, och ingen musik startas förrän användaren klickar på den.
 function prepareTurn() {
   stopAnswering();
   infoEl.textContent = `Det är ${players[currentPlayer]}'s tur! Tryck på GO! för att starta låten.`;
@@ -71,11 +78,11 @@ function startTurn() {
   timeLeft = secondsPerDifficulty[difficulty];
   countdownEl.textContent = timeLeft;
   answerTimer.classList.remove('hidden');
-  stopBtn.disabled = false;
   stopBtn.classList.remove('hidden');
+  stopBtn.disabled = false;
   nextTurnBtn.classList.add('hidden');
 
-  playSpotifyTrack(dummyTrackUri); // Starta musiken DIREKT vid klick
+  playSpotifyTrack(dummyTrackUri);
   timerInterval = setInterval(updateTimer, 1000);
 }
 
@@ -83,24 +90,23 @@ function updateTimer() {
   timeLeft--;
   countdownEl.textContent = timeLeft;
   if (timeLeft <= 0) {
-    stopAnswering(false);
+    stopAnswering();
     infoEl.textContent = `${players[currentPlayer]} hann inte svara!`;
     playTrumpet(0);
     setTimeout(nextTurn, 2000);
   }
 }
 
-function stopAnswering(userClicked = false) {
+function stopAnswering() {
   clearInterval(timerInterval);
   stopTrumpet();
   answerTimer.classList.add('hidden');
   stopBtn.disabled = true;
+  stopBtn.classList.add('hidden');
   if (spotifyPlayer) {
     spotifyPlayer.pause().catch(() => {});
   }
-  stopBtn.classList.add('hidden');
-  // Visa nästa-turn-knappen om spelet är igång
-  if (gameActive) nextTurnBtn.classList.remove('hidden');
+  nextTurnBtn.classList.remove('hidden');
 }
 
 function playTrumpet(delayMs = 0) {
@@ -119,7 +125,7 @@ function stopTrumpet() {
 }
 
 function nextTurn() {
-  stopAnswering(true);
+  stopAnswering();
   currentPlayer = (currentPlayer + 1) % players.length;
   if (currentPlayer === 0) round++;
   renderScoreboard();
@@ -151,20 +157,19 @@ function hideError() {
 
 // --- SPOTIFY SDK INIT ---
 window.onSpotifyWebPlaybackSDKReady = () => {
-  fetch('/get-spotify-token') // Du måste fixa detta endpoint i backend!
+  fetch('/token')
     .then(res => res.json())
     .then(data => {
       spotifyPlayer = new Spotify.Player({
         name: 'Musicas',
-        getOAuthToken: cb => { cb(data.token); },
+        getOAuthToken: cb => { cb(data.access_token); },
         volume: 0.5
       });
       spotifyPlayer.connect();
-      window.spotifyPlayer = spotifyPlayer; // för felsökning
+      window.spotifyPlayer = spotifyPlayer;
     });
 };
 
-// --- Exempel: Spela upp en låt ---
 function playSpotifyTrack(uri) {
   if (spotifyPlayer) {
     spotifyPlayer._options.getOAuthToken(access_token => {
