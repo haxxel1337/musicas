@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Musicas – The Music Quiz</title>
@@ -26,16 +26,6 @@
       font-weight: bold;
       cursor: pointer;
     }
-    #logout-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      z-index: 99;
-      background: #333;
-      color: #fff;
-      font-size: 0.95em;
-      padding: 8px 18px;
-    }
     #countdown { font-size: 72px; margin: 30px 0; }
     #info, #player, #next-turn, #scoreboard, #result-controls { margin-top: 20px; }
     .hidden { display: none; }
@@ -50,35 +40,35 @@
   <script src="/musicas/client/main.js" defer></script>
 </head>
 <body>
-  <button id="logout-btn">Logga ut</button>
   <img src="/musicas/client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
   <h1 style="margin-top: 10px;">Musicas</h1>
 
   <div id="login">
     <a href="/login" id="login-btn-link" style="text-decoration:none;">
-      <button id="login-btn">Logga in med Spotify</button>
+      <button id="login-btn">Log in with Spotify</button>
     </a>
   </div>
 
   <div id="setup" class="hidden">
-    <input id="player-names" type="text" placeholder="Namn, komma-separerade (t.ex. Anna,Bob,Clara)" size="36" />
+    <input id="player-names" type="text" placeholder="Players (comma separated, e.g. Anna,Bob,Clara)" size="36" />
+    <input id="playlist-url" type="text" placeholder="Spotify Playlist URL (optional)" size="36" />
     <select id="difficulty">
-      <option value="Easy">Lätt – 30 sek</option>
-      <option value="Mid">Mellan – 20 sek</option>
-      <option value="Hard">Svår – 10 sek</option>
+      <option value="Easy">Easy – 60 sec</option>
+      <option value="Mid">Medium – 45 sec</option>
+      <option value="Hard">Hard – 30 sec</option>
     </select>
-    <button id="start-btn">Starta spel</button>
+    <button id="start-btn">Start Game</button>
   </div>
 
   <div id="game-controls" class="hidden">
     <div id="info"></div>
     <button id="go-btn" class="hidden">GO!</button>
     <div id="answer-timer" class="hidden">
-      <span id="countdown">30</span>
+      <span id="countdown">60</span>
     </div>
-    <button id="stop-btn" class="hidden">Stopp (jag har svarat!)</button>
-    <button id="next-turn" class="hidden">Nästa spelare</button>
-    <button id="facit-btn" class="hidden">Facit</button>
+    <button id="stop-btn" class="hidden">Stop (I've answered!)</button>
+    <button id="next-turn" class="hidden">Next Player</button>
+    <button id="facit-btn" class="hidden">Show Answer</button>
     <div id="facit-info" class="hidden"></div>
     <div id="scoreboard"></div>
   </div>
