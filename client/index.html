@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Musicas</title>
+  <title>Musicas – Flerspelarläge + Svårighet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -25,6 +25,16 @@
       font-weight: bold;
       cursor: pointer;
     }
+    #logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 99;
+      background: #333;
+      color: #fff;
+      font-size: 0.95em;
+      padding: 8px 18px;
+    }
     #countdown { font-size: 72px; margin: 30px 0; }
     #info, #player, #next-turn, #scoreboard, #result-controls { margin-top: 20px; }
     .hidden { display: none; }
@@ -32,11 +42,14 @@
     th, td { padding: 8px; }
     th { border-bottom: 1px solid #aaa; }
     .active-player { color: #1db954; font-weight: bold; }
+    #facit-info img { box-shadow: 0 4px 16px #0008; margin-bottom: 8px; }
+    #facit-info { margin-top: 16px; }
   </style>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="client/main.js"></script>
 </head>
 <body>
+  <button id="logout-btn">Logga ut</button>
   <img src="client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
   <h1 style="margin-top: 10px;">Musicas</h1>
 
@@ -62,6 +75,8 @@
     </div>
     <button id="stop-btn" class="hidden">Stopp (jag har svarat!)</button>
     <button id="next-turn" class="hidden">Nästa spelare</button>
+    <button id="facit-btn" class="hidden">Facit</button>
+    <div id="facit-info" class="hidden"></div>
     <div id="scoreboard"></div>
   </div>
   <audio id="trumpet-audio" src="client/Trumpet.m4a" preload="auto"></audio>
