@@ -47,6 +47,7 @@ const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
 const loginBtnLink = document.getElementById('login-btn-link');
+const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
 const historyLog = document.getElementById('history-log');
 
@@ -59,7 +60,7 @@ if (laterBtn) laterBtn.addEventListener('click', () => evaluateGuess('later'));
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
 if (loginBtn) loginBtn.addEventListener('click', e => { e.preventDefault(); window.location.href = "/login"; });
 if (loginBtnLink) loginBtnLink.addEventListener('click', () => window.location.href = "/login");
-if (facitBtn) // facitBtn listener removed
+if (facitBtn) facitBtn.addEventListener('click', showFacit);
 if (playAgainBtn) playAgainBtn.addEventListener('click', resetGame);
 if (gameOverBtn) gameOverBtn.addEventListener('click', endGame);
 if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
@@ -132,7 +133,7 @@ function fetchPlaylistTracks(url) {
 function prepareTurn() {
   if (!gameActive) return;
   stopAnswering();
-  // facitBtn removed
+  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
   currentTrackYear = null;
 
@@ -149,9 +150,9 @@ function prepareTurn() {
 
 function startTurn() {
   goBtn.classList.add('hidden');
-  // facitBtn removed
+  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
-  infoEl.innerHTML = `<div>${players[currentPlayer]} is listening...<br>Your reference year is ${assignedYears[currentPlayer]}</div>`;
+  infoEl.textContent = `${players[currentPlayer]} is listening...`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
   countdownEl.textContent = musicDuration;
@@ -183,9 +184,9 @@ function startTurn() {
 
 function startAnswerTimer() {
   let answerTime = secondsPerDifficulty[difficulty];
-  infoEl.innerHTML = `<div>Is it earlier or later than ${assignedYears[currentPlayer]}?</div>`;
+  infoEl.textContent = "Now answer!";
   countdownEl.textContent = answerTime;
-  // facitBtn removed
+  facitBtn.classList.remove('hidden');
   earlierBtn.classList.remove('hidden');
   laterBtn.classList.remove('hidden');
   forceAnswerBtn.classList.add('hidden');
@@ -248,9 +249,8 @@ function evaluateGuess(direction) {
         return;
       }
 
-      // facitBtn removed
+      facitBtn.classList.remove('hidden');
       facitInfo.classList.add('hidden');
-      showFacit();
       nextTurnBtn.classList.remove('hidden');
     })
     .catch(() => {
@@ -267,13 +267,12 @@ function stopAnswering() {
   laterBtn.classList.add('hidden');
   forceAnswerBtn.classList.add('hidden');
   if (spotifyPlayer) spotifyPlayer.pause().catch(() => {});
-  showFacit();
-      nextTurnBtn.classList.remove('hidden');
+  nextTurnBtn.classList.remove('hidden');
 }
 
 function nextTurn() {
   stopAnswering();
-  // facitBtn removed
+  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
 
   if (currentPlayer === players.length - 1) {
