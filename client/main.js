@@ -1,5 +1,4 @@
 
-// --- SPELSTATE & SPOTIFY ---
 let trumpetTimeout = null;
 let timerInterval = null;
 let timeLeft = 30;
@@ -15,7 +14,6 @@ const secondsPerDifficulty = { Easy: 30, Mid: 20, Hard: 10 };
 let spotifyPlayer = null;
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
-// --- DOM ELEMENTS ---
 const playerNameInput = document.getElementById('player-names');
 const startBtn = document.getElementById('start-btn');
 const difficultySelect = document.getElementById('difficulty');
@@ -33,7 +31,6 @@ const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
 
-// --- EVENTS ---
 if (startBtn) startBtn.addEventListener('click', startGame);
 if (difficultySelect) difficultySelect.addEventListener('change', e => {
   difficulty = e.target.value;
@@ -47,7 +44,6 @@ function login() {
   window.location.href = "/login";
 }
 
-// --- GAME LOGIC ---
 function startGame() {
   const names = playerNameInput.value.split(',').map(n => n.trim()).filter(Boolean);
   if (names.length < 1) return showError("Ange minst ett namn (komma-separerat).");
@@ -75,26 +71,43 @@ function prepareTurn() {
 function startTurn() {
   goBtn.classList.add('hidden');
   infoEl.textContent = `${players[currentPlayer]} lyssnar...`;
-  timeLeft = secondsPerDifficulty[difficulty];
-  countdownEl.textContent = timeLeft;
+
+  let musicDuration = secondsPerDifficulty[difficulty];
+  countdownEl.textContent = musicDuration;
   answerTimer.classList.remove('hidden');
   stopBtn.classList.remove('hidden');
   stopBtn.disabled = false;
   nextTurnBtn.classList.add('hidden');
-
+  
   playSpotifyTrack(dummyTrackUri);
-  timerInterval = setInterval(updateTimer, 1000);
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    musicDuration--;
+    countdownEl.textContent = musicDuration;
+    if (musicDuration <= 0) {
+      clearInterval(timerInterval);
+      if (spotifyPlayer) spotifyPlayer.pause();
+      startAnswerTimer();
+    }
+  }, 1000);
 }
 
-function updateTimer() {
-  timeLeft--;
-  countdownEl.textContent = timeLeft;
-  if (timeLeft <= 0) {
-    stopAnswering();
-    infoEl.textContent = `${players[currentPlayer]} hann inte svara!`;
-    playTrumpet(0);
-    setTimeout(nextTurn, 2000);
-  }
+function startAnswerTimer() {
+  let answerTime = secondsPerDifficulty[difficulty];
+  infoEl.textContent = `Svara nu!`;
+  countdownEl.textContent = answerTime;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    answerTime--;
+    countdownEl.textContent = answerTime;
+    if (answerTime <= 0) {
+      clearInterval(timerInterval);
+      stopAnswering();
+      infoEl.textContent = `${players[currentPlayer]} hann inte svara!`;
+      playTrumpet(0);
+      setTimeout(nextTurn, 2000);
+    }
+  }, 1000);
 }
 
 function stopAnswering() {
@@ -132,7 +145,6 @@ function nextTurn() {
   prepareTurn();
 }
 
-// --- SCOREBOARD & UI ---
 function renderScoreboard() {
   let html = `<table><tr><th>Spelare</th><th>Poäng</th></tr>`;
   players.forEach((player, idx) => {
@@ -145,7 +157,6 @@ function renderScoreboard() {
   scoreboardEl.innerHTML = html;
 }
 
-// --- INFO & FEL ---
 function showError(msg) {
   errorEl.textContent = msg;
   errorEl.classList.remove('hidden');
@@ -155,7 +166,6 @@ function hideError() {
   errorEl.classList.add('hidden');
 }
 
-// --- SPOTIFY SDK INIT ---
 window.onSpotifyWebPlaybackSDKReady = () => {
   fetch('/token')
     .then(res => res.json())
