@@ -43,6 +43,7 @@
     #history-log table { margin-top: 10px; font-size: 14px; }
   </style>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script src="/musicas/client/main.js" defer></script>
 </head>
 <body>
   <img src="/musicas/client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
@@ -78,6 +79,7 @@
     <button id="later-btn" class="hidden">Later</button>
 
     <button id="next-turn" class="hidden">Next Player</button>
+    <button id="facit-btn" class="hidden">Show Answer</button>
     <div id="facit-info" class="hidden"></div>
 
     <div id="scoreboard"></div>
@@ -89,6 +91,5 @@
 
   <audio id="trumpet-audio" src="/musicas/client/Trumpet.m4a" preload="auto"></audio>
   <div id="error-message" class="hidden"></div>
-  <script src="/musicas/client/main.js"></script>
 </body>
 </html>
