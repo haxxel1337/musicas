@@ -1,3 +1,5 @@
+
+// --- SPELSTATE & SPOTIFY ---
 let trumpetTimeout = null;
 let timerInterval = null;
 let timeLeft = 30;
@@ -14,6 +16,7 @@ let spotifyPlayer = null;
 let currentTrackUri = null;
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
+// --- DOM ELEMENTS ---
 const playerNameInput = document.getElementById('player-names');
 const startBtn = document.getElementById('start-btn');
 const difficultySelect = document.getElementById('difficulty');
@@ -30,9 +33,26 @@ const errorEl = document.getElementById('error-message');
 const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
+const loginBtnLink = document.getElementById('login-btn-link');
 const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
 const logoutBtn = document.getElementById('logout-btn');
+
+// --- LOGIN/LOGOUT FLOW ---
+function checkAuthAndShow() {
+  fetch('/token')
+    .then(res => res.json())
+    .then(data => {
+      if (data.access_token) {
+        loginDiv.classList.add('hidden');
+        setupDiv.classList.remove('hidden');
+      } else {
+        loginDiv.classList.remove('hidden');
+        setupDiv.classList.add('hidden');
+      }
+    });
+}
+checkAuthAndShow();
 
 if (startBtn) startBtn.addEventListener('click', startGame);
 if (difficultySelect) difficultySelect.addEventListener('change', e => {
@@ -41,10 +61,17 @@ if (difficultySelect) difficultySelect.addEventListener('change', e => {
 if (goBtn) goBtn.addEventListener('click', startTurn);
 if (stopBtn) stopBtn.addEventListener('click', stopAnswering);
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
-if (loginBtn) loginBtn.addEventListener('click', () => window.location.href = "/login");
+if (loginBtn) loginBtn.addEventListener('click', function(e) {
+  e.preventDefault();
+  window.location.href = "/login";
+});
+if (loginBtnLink) loginBtnLink.addEventListener('click', function(e) {
+  window.location.href = "/login";
+});
 if (facitBtn) facitBtn.addEventListener('click', showFacit);
 if (logoutBtn) logoutBtn.addEventListener('click', () => window.location.href = "/logout");
 
+// --- GAME LOGIC ---
 function startGame() {
   const names = playerNameInput.value.split(',').map(n => n.trim()).filter(Boolean);
   if (names.length < 1) return showError("Ange minst ett namn (komma-separerat).");
