@@ -151,12 +151,12 @@ function hideError() {
 
 // --- SPOTIFY SDK INIT ---
 window.onSpotifyWebPlaybackSDKReady = () => {
-  fetch('/token') // <- ÄNDRA till /token enligt gamla server.py!
+  fetch('/get-spotify-token') // Du måste fixa detta endpoint i backend!
     .then(res => res.json())
     .then(data => {
       spotifyPlayer = new Spotify.Player({
         name: 'Musicas',
-        getOAuthToken: cb => { cb(data.access_token); },
+        getOAuthToken: cb => { cb(data.token); },
         volume: 0.5
       });
       spotifyPlayer.connect();
