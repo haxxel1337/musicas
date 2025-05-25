@@ -2,7 +2,7 @@ from flask import Flask, request, redirect, session, jsonify
 import requests
 import os
 
-app = Flask(__name__, static_folder="client", static_url_path="/client")
+app = Flask(__name__, static_folder="client", static_url_path="/musicas/client")
 app.secret_key = "supersecret"
 
 CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
