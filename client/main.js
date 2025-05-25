@@ -1,15 +1,3 @@
-
-// ... Allt som innan (facit, timers, osv) ...
-
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', () => {
-    window.location.href = "/logout";
-  });
-}
-
-// --- (klistra in senaste main_js_facit från tidigare steg här, men lägg till ovan kod högst upp) ---
-
 let trumpetTimeout = null;
 let timerInterval = null;
 let timeLeft = 30;
@@ -44,6 +32,7 @@ const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
 const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
+const logoutBtn = document.getElementById('logout-btn');
 
 if (startBtn) startBtn.addEventListener('click', startGame);
 if (difficultySelect) difficultySelect.addEventListener('change', e => {
@@ -52,12 +41,9 @@ if (difficultySelect) difficultySelect.addEventListener('change', e => {
 if (goBtn) goBtn.addEventListener('click', startTurn);
 if (stopBtn) stopBtn.addEventListener('click', stopAnswering);
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
-if (loginBtn) loginBtn.addEventListener('click', login);
+if (loginBtn) loginBtn.addEventListener('click', () => window.location.href = "/login");
 if (facitBtn) facitBtn.addEventListener('click', showFacit);
-
-function login() {
-  window.location.href = "/login";
-}
+if (logoutBtn) logoutBtn.addEventListener('click', () => window.location.href = "/logout");
 
 function startGame() {
   const names = playerNameInput.value.split(',').map(n => n.trim()).filter(Boolean);
