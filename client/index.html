@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Musicas – The Music Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button, select {
+      font-size: 16px;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background-color: #1db954;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #player-name-fields input {
+      display: block;
+      margin: 5px auto;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+  <script defer src="main.js"></script>
+</head>
+<body>
+  <h1>Musicas</h1>
+  <div id="login">
+    <a href="/login"><button id="login-btn">Log in with Spotify</button></a>
+  </div>
+
+  <div id="setup" class="hidden">
+    <div id="player-count-select">
+      <h2>How many players?</h2>
+      <div id="player-buttons"></div>
+    </div>
+
+    <div id="player-name-fields" class="hidden">
+      <h2>Enter player names</h2>
+      <div id="name-inputs"></div>
+      <button id="continue-to-playlist">Continue</button>
+    </div>
+
+    <div id="playlist-and-start" class="hidden">
+      <h2>Choose playlist and difficulty</h2>
+      <select id="playlist-select">
+        <option value="">Select playlist</option>
+        <option value="https://open.spotify.com/playlist/5ICyPWhv13dJrbAgLQhEy8w">Hitster Classics</option>
+        <option value="https://open.spotify.com/playlist/6iA83qNQm83gkCJk5s0Jxf">House Classics</option>
+        <option value="https://open.spotify.com/playlist/7EmY6d8XrAD8IT5p2GDjQL">Most Wanted Classics</option>
+        <option value="https://open.spotify.com/playlist/6tzsRmm0nE2AzHAb5sWELC">Movies & TV Series</option>
+        <option value="https://open.spotify.com/playlist/4WPN4VwaC4ksotX1CwOMph">Cartoon Themes</option>
+        <option value="https://open.spotify.com/playlist/2za0rYXYgAYLblQcfrwyGS">Disney på svenska</option>
+        <option value="https://open.spotify.com/playlist/37i9dQZF1DWZBCPUIUs2iR">Country Classics</option>
+        <option value="https://open.spotify.com/playlist/2v2Qm9G3G9SDzVMj41PIlh">Melodifestivalen</option>
+        <option value="https://open.spotify.com/playlist/2OFfgjs6kj0eA6FNayhAAJ">Greatest Pop Songs Ever</option>
+        <option value="https://open.spotify.com/playlist/7xODAG8nzNUp4TPOKwsjfW">Greatest Love Songs of All Time</option>
+        <option value="own">Own Playlist</option>
+      </select>
+      <input id="own-playlist-input" class="hidden" type="text" placeholder="Paste your playlist URL" />
+      <select id="difficulty">
+        <option value="Easy">Easy – 60s</option>
+        <option value="Mid">Medium – 45s</option>
+        <option value="Hard">Hard – 30s</option>
+      </select>
+      <button id="start-btn">Start Game</button>
+    </div>
+  </div>
+</body>
+</html>
