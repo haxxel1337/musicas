@@ -52,8 +52,7 @@ const trumpetAudio = document.getElementById('trumpet-audio');
 const errorEl = document.getElementById('error-message');
 const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
-const loginBtn = document.getElementById('login-btn');
-const facitBtn = document.getElementById('facit-btn');
+const mainTitle = document.getElementById('main-title');
 const facitInfo = document.getElementById('facit-info');
 const historyLog = document.getElementById('history-log');
 
@@ -63,7 +62,6 @@ if (goBtn) goBtn.addEventListener('click', startTurn);
 if (earlierBtn) earlierBtn.addEventListener('click', () => evaluateGuess('earlier'));
 if (laterBtn) laterBtn.addEventListener('click', () => evaluateGuess('later'));
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
-if (facitBtn) facitBtn.addEventListener('click', showFacit);
 if (playAgainBtn) playAgainBtn.addEventListener('click', resetGame);
 if (gameOverBtn) gameOverBtn.addEventListener('click', endGame);
 if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
@@ -155,6 +153,7 @@ function startGame() {
   const doStart = () => {
     setupDiv.classList.add('hidden');
     gameControls.classList.remove('hidden');
+    if (mainTitle) mainTitle.classList.add('hidden');
     renderScoreboard();
     renderHistory();
     prepareTurn();
@@ -180,7 +179,6 @@ function fetchPlaylistTracks(url) {
 function prepareTurn() {
   if (!gameActive) return;
   stopAnswering();
-  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
   currentTrackYear = null;
 
@@ -196,9 +194,8 @@ function prepareTurn() {
 
 function startTurn() {
   goBtn.classList.add('hidden');
-  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
-  infoEl.textContent = `${players[currentPlayer]} is listening...`;
+  infoEl.textContent = `${players[currentPlayer]} is listening... Reference year: ${assignedYears[currentPlayer]}`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
   countdownEl.textContent = musicDuration;
@@ -228,28 +225,6 @@ function startTurn() {
   }, 1000);
 }
 
-function startAnswerTimer() {
-  let answerTime = secondsPerDifficulty[difficulty];
-  infoEl.textContent = "Now answer!";
-  countdownEl.textContent = answerTime;
-  facitBtn.classList.remove('hidden');
-  earlierBtn.classList.remove('hidden');
-  laterBtn.classList.remove('hidden');
-  forceAnswerBtn.classList.add('hidden');
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    answerTime--;
-    countdownEl.textContent = answerTime;
-    if (answerTime <= 0) {
-      clearInterval(timerInterval);
-      stopAnswering();
-      infoEl.textContent = `${players[currentPlayer]} didn't answer in time!`;
-      playTrumpet();
-      setTimeout(nextTurn, 2000);
-    }
-  }, 1000);
-}
-
 function evaluateGuess(direction) {
   stopAnswering();
   const trackId = currentTrackUri?.split(':')[2];
@@ -262,6 +237,7 @@ function evaluateGuess(direction) {
       if (!releaseYear || isNaN(parseInt(releaseYear))) {
         infoEl.textContent = "Could not determine release year.";
         playTrumpet();
+        showFacit(data);
         return;
       }
 
@@ -283,6 +259,9 @@ function evaluateGuess(direction) {
 
       renderScoreboard();
 
+      // Visa alltid facit/coverart direkt efter svar
+      showFacit(data);
+
       if (scores[currentPlayer] >= WINNING_SCORE) {
         infoEl.textContent = `${players[currentPlayer]} wins the game with ${scores[currentPlayer]} points! 🎉`;
         gameActive = false;
@@ -295,14 +274,68 @@ function evaluateGuess(direction) {
         return;
       }
 
-      facitBtn.classList.remove('hidden');
-      facitInfo.classList.add('hidden');
+      facitInfo.classList.remove('hidden');
       nextTurnBtn.classList.remove('hidden');
     })
     .catch(() => {
       infoEl.textContent = "Error fetching track info.";
       playTrumpet();
+      showFacit();
     });
+}
+
+function startAnswerTimer() {
+  let answerTime = secondsPerDifficulty[difficulty];
+  infoEl.textContent = "Now answer!";
+  countdownEl.textContent = answerTime;
+  earlierBtn.classList.remove('hidden');
+  laterBtn.classList.remove('hidden');
+  forceAnswerBtn.classList.add('hidden');
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    answerTime--;
+    countdownEl.textContent = answerTime;
+    if (answerTime <= 0) {
+      clearInterval(timerInterval);
+      stopAnswering();
+      infoEl.textContent = `${players[currentPlayer]} didn't answer in time!`;
+      playTrumpet();
+      // Visa facit även om man inte hann svara
+      showFacit();
+      setTimeout(nextTurn, 2000);
+    }
+  }, 1000);
+}
+
+function showFacit(existingData = null) {
+  function renderFacit(data) {
+    let year = "-";
+    if (data.album?.release_date) {
+      year = data.album.release_date.slice(0, 4);
+      currentTrackYear = year;
+    }
+    facitInfo.innerHTML = `
+      <img src="${data.album.images[0].url}" alt="Cover" style="max-width:150px;border-radius:8px;"><br>
+      <div style="font-size:1.1em;margin-top:10px;font-weight:bold;">
+        ${data.artists.map(a => a.name).join(", ")} – ${data.name} – ${year}
+      </div>
+    `;
+    facitInfo.classList.remove('hidden');
+  }
+
+  if (existingData) {
+    renderFacit(existingData);
+  } else {
+    let trackId = currentTrackUri?.split(":")[2];
+    if (!trackId) return;
+    fetch(`/trackinfo/${trackId}`)
+      .then(res => res.json())
+      .then(renderFacit)
+      .catch(() => {
+        facitInfo.innerHTML = "Could not fetch track info.";
+        facitInfo.classList.remove('hidden');
+      });
+  }
 }
 
 function stopAnswering() {
@@ -318,7 +351,6 @@ function stopAnswering() {
 
 function nextTurn() {
   stopAnswering();
-  facitBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
 
   if (currentPlayer === players.length - 1) {
@@ -397,6 +429,7 @@ function endGame() {
   gameControls.classList.add('hidden');
   setupDiv.classList.remove('hidden');
   loginDiv.classList.add('hidden');
+  if (mainTitle) mainTitle.classList.remove('hidden');
 }
 
 function playTrumpet(delay = 0) {
@@ -453,32 +486,6 @@ function playSpotifyTrack(uri) {
   }
 }
 
-function showFacit() {
-  let trackId = currentTrackUri?.split(":")[2];
-  if (!trackId) return;
-
-  fetch(`/trackinfo/${trackId}`)
-    .then(res => res.json())
-    .then(data => {
-      let year = "-";
-      if (data.album?.release_date) {
-        year = data.album.release_date.slice(0, 4);
-        currentTrackYear = year;
-      }
-      facitInfo.innerHTML = `
-        <img src="${data.album.images[0].url}" alt="Cover" style="max-width:150px;border-radius:8px;"><br>
-        <div style="font-size:1.1em;margin-top:10px;font-weight:bold;">
-          ${data.artists.map(a => a.name).join(", ")} – ${data.name} – ${year}
-        </div>
-      `;
-      facitInfo.classList.remove('hidden');
-    })
-    .catch(() => {
-      facitInfo.innerHTML = "Could not fetch track info.";
-      facitInfo.classList.remove('hidden');
-    });
-}
-
 function showError(msg) {
   errorEl.textContent = msg;
   errorEl.classList.remove('hidden');
@@ -493,7 +500,7 @@ function hideError() {
 window.addEventListener("DOMContentLoaded", () => {
   checkAuthAndShow();
   initSetupFlow();
-  // För att alltid börja om på setup-flöde:
   setupDiv.classList.remove('hidden');
   gameControls.classList.add('hidden');
+  if (mainTitle) mainTitle.classList.remove('hidden');
 });
