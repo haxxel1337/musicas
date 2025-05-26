@@ -29,32 +29,38 @@
       display: block;
       margin: 5px auto;
     }
-    .hidden {
-      display: none;
+    .hidden { display: none; }
+    #scoreboard table, #history-log table {
+      margin: 10px auto; background: #222; border-radius: 10px; border-collapse: collapse;
+      min-width: 220px;
     }
+    #scoreboard th, #scoreboard td, #history-log th, #history-log td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #222;
+    }
+    .active-player { font-weight: bold; color: #1db954; }
+    #error-message { color: #ff4444; font-weight: bold; margin-top: 20px; }
+    #facit-info img { box-shadow: 0 0 12px #0008; }
   </style>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="/musicas/client/main.js" defer></script>
 </head>
 <body>
   <img src="/musicas/client/musicas.webp" alt="Musicas Logo" style="max-width: 200px; display: block; margin: 20px auto;">
   <h1>Musicas</h1>
-
   <div id="login">
     <a href="/login"><button id="login-btn">Log in with Spotify</button></a>
   </div>
-
   <div id="setup" class="hidden">
     <div id="player-count-select">
       <h2>How many players?</h2>
       <div id="player-buttons"></div>
     </div>
-
     <div id="player-name-fields" class="hidden">
       <h2>Enter player names</h2>
       <div id="name-inputs"></div>
       <button id="continue-to-playlist">Continue</button>
     </div>
-
     <div id="playlist-and-start" class="hidden">
       <h2>Choose playlist and difficulty</h2>
       <select id="playlist-select">
@@ -80,5 +86,24 @@
       <button id="start-btn">Start Game</button>
     </div>
   </div>
+  <div id="game-controls" class="hidden">
+    <div id="info"></div>
+    <button id="go-btn" class="hidden">GO!</button>
+    <div id="answer-timer" class="hidden">
+      <span id="countdown"></span>
+    </div>
+    <button id="earlier-btn" class="hidden">Earlier</button>
+    <button id="later-btn" class="hidden">Later</button>
+    <button id="force-answer-btn" class="hidden">Answer Now</button>
+    <button id="next-turn" class="hidden">Next Player</button>
+    <button id="play-again-btn" class="hidden">Play Again</button>
+    <button id="game-over-btn" class="hidden">End Game</button>
+    <button id="facit-btn" class="hidden">Show Answer</button>
+    <div id="facit-info" class="hidden"></div>
+    <div id="scoreboard"></div>
+    <div id="history-log"></div>
+  </div>
+  <audio id="trumpet-audio" src="/musicas/client/Trumpet.m4a"></audio>
+  <div id="error-message" class="hidden"></div>
 </body>
 </html>
