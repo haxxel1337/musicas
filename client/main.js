@@ -1,3 +1,12 @@
+// --- SETUP FLOW ---
+const playerButtonsDiv = document.getElementById('player-buttons');
+const playerNameFieldsDiv = document.getElementById('player-name-fields');
+const nameInputsDiv = document.getElementById('name-inputs');
+const continueBtn = document.getElementById('continue-to-playlist');
+const playlistAndStartDiv = document.getElementById('playlist-and-start');
+const playlistSelect = document.getElementById('playlist-select');
+const ownPlaylistInput = document.getElementById('own-playlist-input');
+
 // --- GAME STATE & SPOTIFY ---
 const WINNING_SCORE = 20;
 
@@ -44,20 +53,16 @@ const errorEl = document.getElementById('error-message');
 const setupDiv = document.getElementById('setup');
 const loginDiv = document.getElementById('login');
 const loginBtn = document.getElementById('login-btn');
-const loginBtnLink = document.getElementById('login-btn-link');
 const facitBtn = document.getElementById('facit-btn');
 const facitInfo = document.getElementById('facit-info');
 const historyLog = document.getElementById('history-log');
 
 // --- Event listeners ---
-if (startBtn) startBtn.addEventListener('click', startGame);
 if (difficultySelect) difficultySelect.addEventListener('change', e => difficulty = e.target.value);
 if (goBtn) goBtn.addEventListener('click', startTurn);
 if (earlierBtn) earlierBtn.addEventListener('click', () => evaluateGuess('earlier'));
 if (laterBtn) laterBtn.addEventListener('click', () => evaluateGuess('later'));
 if (nextTurnBtn) nextTurnBtn.addEventListener('click', nextTurn);
-if (loginBtn) loginBtn.addEventListener('click', e => { e.preventDefault(); window.location.href = "/login"; });
-if (loginBtnLink) loginBtnLink.addEventListener('click', () => window.location.href = "/login");
 if (facitBtn) facitBtn.addEventListener('click', showFacit);
 if (playAgainBtn) playAgainBtn.addEventListener('click', resetGame);
 if (gameOverBtn) gameOverBtn.addEventListener('click', endGame);
@@ -66,6 +71,52 @@ if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
   clearInterval(timerInterval);
   startAnswerTimer();
 });
+
+// --- Setup-flow för namn och spellista ---
+function initSetupFlow() {
+  for (let i = 2; i <= 6; i++) {
+    let btn = document.createElement('button');
+    btn.textContent = i;
+    btn.onclick = () => showNameFields(i);
+    playerButtonsDiv.appendChild(btn);
+  }
+}
+
+function showNameFields(count) {
+  document.getElementById('player-count-select').classList.add('hidden');
+  playerNameFieldsDiv.classList.remove('hidden');
+  nameInputsDiv.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    let inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = 'Player ' + (i + 1) + ' name';
+    nameInputsDiv.appendChild(inp);
+  }
+}
+
+if (continueBtn) continueBtn.onclick = () => {
+  let names = Array.from(nameInputsDiv.querySelectorAll('input')).map(inp => inp.value.trim()).filter(Boolean);
+  if (names.length < 1) return alert('Enter player names');
+  localStorage.setItem('players', JSON.stringify(names));
+  playerNameFieldsDiv.classList.add('hidden');
+  playlistAndStartDiv.classList.remove('hidden');
+};
+
+if (playlistSelect) playlistSelect.onchange = e => {
+  if (e.target.value === "own") {
+    ownPlaylistInput.classList.remove('hidden');
+  } else {
+    ownPlaylistInput.classList.add('hidden');
+  }
+};
+
+if (startBtn) startBtn.onclick = () => {
+  let url = playlistSelect.value === "own" ? ownPlaylistInput.value.trim() : playlistSelect.value;
+  if (!url) return alert('Välj spellista');
+  localStorage.setItem('playlistUrl', url);
+  localStorage.setItem('difficulty', difficultySelect.value);
+  startGame();
+};
 
 // --- Login check ---
 function checkAuthAndShow() {
@@ -81,7 +132,6 @@ function checkAuthAndShow() {
       }
     });
 }
-checkAuthAndShow();
 
 // --- Game Flow ---
 function startGame() {
@@ -102,7 +152,7 @@ function startGame() {
   playlistUrl = storedPlaylistUrl;
   hideError();
 
-  const start = () => {
+  const doStart = () => {
     setupDiv.classList.add('hidden');
     gameControls.classList.remove('hidden');
     renderScoreboard();
@@ -112,36 +162,8 @@ function startGame() {
 
   fetchPlaylistTracks(playlistUrl).then(tracks => {
     playlistTracks = tracks;
-    start();
+    doStart();
   });
-  if (names.length < 1) return showError("Please enter at least one player.");
-
-  players = names;
-  scores = Array(players.length).fill(0);
-  assignedYears = Array(players.length).fill(null);
-  history = [];
-  currentPlayer = 0;
-  round = 1;
-  gameActive = true;
-  hideError();
-
-  const start = () => {
-    setupDiv.classList.add('hidden');
-    gameControls.classList.remove('hidden');
-    renderScoreboard();
-    renderHistory();
-    prepareTurn();
-  };
-
-  if (playlistUrl) {
-    fetchPlaylistTracks(playlistUrl).then(tracks => {
-      playlistTracks = tracks;
-      start();
-    });
-  } else {
-    playlistTracks = [];
-    start();
-  }
 }
 
 function fetchPlaylistTracks(url) {
@@ -167,7 +189,6 @@ function prepareTurn() {
 
   infoEl.textContent = `${players[currentPlayer]}'s turn! Your reference year is ${randomYear}. Press GO!`;
   goBtn.classList.remove('hidden');
-  stopBtn?.classList?.add('hidden');
   answerTimer.classList.add('hidden');
   nextTurnBtn.classList.add('hidden');
   forceAnswerBtn.classList.add('hidden');
@@ -302,7 +323,7 @@ function nextTurn() {
 
   if (currentPlayer === players.length - 1) {
     const roundScores = scores.map((score, i) => ({ player: players[i], score }));
-    history.push({ round, scores: roundScores });
+    history.push({ round, scores: roundScores, round: round });
     renderHistory();
     round++;
   }
@@ -337,7 +358,7 @@ function renderScoreboard() {
 }
 
 function renderHistory() {
-  if (history.length === 0) return;
+  if (history.length === 0) { historyLog.innerHTML = ''; return; }
   let html = `<h3>Round History</h3>`;
   history.forEach(entry => {
     html += `<table><tr><th>Round ${entry.round}</th><th>Score</th></tr>`;
@@ -350,6 +371,9 @@ function renderHistory() {
 }
 
 function resetGame() {
+  localStorage.removeItem("players");
+  localStorage.removeItem("playlistUrl");
+  localStorage.removeItem("difficulty");
   scores = Array(players.length).fill(0);
   assignedYears = Array(players.length).fill(null);
   currentPlayer = 0;
@@ -364,6 +388,9 @@ function resetGame() {
 }
 
 function endGame() {
+  localStorage.removeItem("players");
+  localStorage.removeItem("playlistUrl");
+  localStorage.removeItem("difficulty");
   gameActive = false;
   playAgainBtn.classList.add('hidden');
   gameOverBtn.classList.add('hidden');
@@ -462,12 +489,11 @@ function hideError() {
   errorEl.classList.add('hidden');
 }
 
-
 // --- Auto Start if Data Exists ---
-window.addEventListener("load", () => {
-  const storedPlayers = JSON.parse(localStorage.getItem("players") || "[]");
-  const storedPlaylistUrl = localStorage.getItem("playlistUrl") || "";
-  if (storedPlayers.length > 0 && storedPlaylistUrl) {
-    startGame();
-  }
+window.addEventListener("DOMContentLoaded", () => {
+  checkAuthAndShow();
+  initSetupFlow();
+  // För att alltid börja om på setup-flöde:
+  setupDiv.classList.remove('hidden');
+  gameControls.classList.add('hidden');
 });
