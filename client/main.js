@@ -309,12 +309,13 @@ function evaluateGuessDynamic(type, value) {
       }
       let years = playerYears[currentPlayer].slice().sort((a, b) => a - b);
       let correct = false;
+      // NY LOGIK: man får rätt även om releaseYear = value!
       if (type === 'earlier') {
-        correct = (releaseYear < value);
+        correct = (releaseYear <= value);
       } else if (type === 'between') {
         correct = (releaseYear >= value[0] && releaseYear <= value[1]);
       } else if (type === 'later') {
-        correct = (releaseYear > value);
+        correct = (releaseYear >= value);
       }
 
       if (correct) {
