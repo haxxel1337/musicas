@@ -30,6 +30,7 @@ let playlistUrl = '';
 let deviceReady = false;
 let deviceId = null;
 let playlistTracks = [];
+let unplayedTracks = [];
 
 const dummyTrackUri = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
 
@@ -161,6 +162,7 @@ function startGame() {
 
   fetchPlaylistTracks(playlistUrl).then(tracks => {
     playlistTracks = tracks;
+    unplayedTracks = tracks.slice(); // kopiera
     doStart();
   });
 }
@@ -206,9 +208,17 @@ function startTurn() {
   forceAnswerBtn.classList.remove('hidden');
 
   let trackUri = dummyTrackUri;
-  if (playlistTracks.length > 0) {
-    const randIdx = Math.floor(Math.random() * playlistTracks.length);
-    trackUri = playlistTracks[randIdx].uri;
+  // --- NYTT: slumpa bland ej spelade låtar! ---
+  if (unplayedTracks.length > 0) {
+    const randIdx = Math.floor(Math.random() * unplayedTracks.length);
+    trackUri = unplayedTracks[randIdx].uri;
+    unplayedTracks.splice(randIdx, 1);
+  } else if (playlistTracks.length > 0) {
+    // alla låtar har spelats, börja om!
+    unplayedTracks = playlistTracks.slice();
+    const randIdx = Math.floor(Math.random() * unplayedTracks.length);
+    trackUri = unplayedTracks[randIdx].uri;
+    unplayedTracks.splice(randIdx, 1);
   }
   playSpotifyTrack(trackUri);
   currentTrackUri = trackUri;
@@ -258,8 +268,6 @@ function evaluateGuess(direction) {
       }
 
       renderScoreboard();
-
-      // Visa alltid facit/coverart direkt efter svar
       showFacit(data);
 
       if (scores[currentPlayer] >= WINNING_SCORE) {
@@ -300,7 +308,6 @@ function startAnswerTimer() {
       stopAnswering();
       infoEl.textContent = `${players[currentPlayer]} didn't answer in time!`;
       playTrumpet();
-      // Visa facit även om man inte hann svara
       showFacit();
       setTimeout(nextTurn, 2000);
     }
