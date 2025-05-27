@@ -64,7 +64,8 @@ if (gameOverBtn) gameOverBtn.addEventListener('click', endGame);
 if (forceAnswerBtn) forceAnswerBtn.addEventListener('click', () => {
   if (spotifyPlayer) spotifyPlayer.pause();
   clearInterval(timerInterval);
-  startAnswerTimer();
+  forceAnswerBtn.classList.add('hidden');
+  showAnswerAlternatives();
 });
 
 // --- Setup-flow för namn och spellista ---
@@ -196,7 +197,7 @@ function startTurn() {
   goBtn.classList.add('hidden');
   facitInfo.classList.add('hidden');
   let years = playerYears[currentPlayer].slice().sort((a, b) => a - b);
-  infoEl.textContent = `${players[currentPlayer]} is listening... Reference year(s): ${years.join(", ")}`;
+  infoEl.innerHTML = `${players[currentPlayer]} is listening...<br><span style="font-size:0.97em;">Reference year(s): ${years.join(", ")}</span>`;
 
   let musicDuration = secondsPerDifficulty[difficulty];
   countdownEl.textContent = musicDuration;
@@ -230,35 +231,42 @@ function startTurn() {
   }, 1000);
 }
 
-function renderAnswerButtons(years) {
-  // Rensa gamla knappar
-  Array.from(document.querySelectorAll('.dynamic-answer')).forEach(btn => btn.remove());
+function showAnswerAlternatives() {
+  answerTimer.classList.remove('hidden');
+  let years = playerYears[currentPlayer].slice().sort((a, b) => a - b);
+  renderAnswerButtons(years);
+}
 
+function renderAnswerButtons(years) {
+  // Ta bort gamla knappar
+  Array.from(document.querySelectorAll('.dynamic-answer')).forEach(btn => btn.remove());
   years = years.slice().sort((a, b) => a - b);
 
-  // Skapa "Earlier than första året"
-  let btn = document.createElement('button');
-  btn.className = 'dynamic-answer';
-  btn.textContent = `Earlier than ${years[0]}`;
-  btn.onclick = () => evaluateGuessDynamic('earlier', years[0]);
-  answerTimer.parentNode.insertBefore(btn, answerTimer.nextSibling);
+  // 1. Earlier först
+  let earlierBtnD = document.createElement('button');
+  earlierBtnD.className = 'dynamic-answer';
+  earlierBtnD.textContent = `Earlier than ${years[0]}`;
+  earlierBtnD.onclick = () => evaluateGuessDynamic('earlier', years[0]);
+  answerTimer.parentNode.insertBefore(earlierBtnD, answerTimer.nextSibling);
 
-  // Skapa "Between år1 - år2", "år2 - år3" etc
+  // 2. Alla "Between"
+  let afterEl = earlierBtnD;
   for (let i = 0; i < years.length - 1; i++) {
     let y1 = years[i], y2 = years[i+1];
-    let b = document.createElement('button');
-    b.className = 'dynamic-answer';
-    b.textContent = `Between ${y1} - ${y2}`;
-    b.onclick = () => evaluateGuessDynamic('between', [y1, y2]);
-    answerTimer.parentNode.insertBefore(b, answerTimer.nextSibling);
+    let betweenBtn = document.createElement('button');
+    betweenBtn.className = 'dynamic-answer';
+    betweenBtn.textContent = `Between ${y1} - ${y2}`;
+    betweenBtn.onclick = () => evaluateGuessDynamic('between', [y1, y2]);
+    afterEl.parentNode.insertBefore(betweenBtn, afterEl.nextSibling);
+    afterEl = betweenBtn;
   }
 
-  // Skapa "Later than sista året"
-  let btn2 = document.createElement('button');
-  btn2.className = 'dynamic-answer';
-  btn2.textContent = `Later than ${years[years.length - 1]}`;
-  btn2.onclick = () => evaluateGuessDynamic('later', years[years.length - 1]);
-  answerTimer.parentNode.insertBefore(btn2, answerTimer.nextSibling);
+  // 3. Later sist
+  let laterBtnD = document.createElement('button');
+  laterBtnD.className = 'dynamic-answer';
+  laterBtnD.textContent = `Later than ${years[years.length - 1]}`;
+  laterBtnD.onclick = () => evaluateGuessDynamic('later', years[years.length - 1]);
+  afterEl.parentNode.insertBefore(laterBtnD, afterEl.nextSibling);
 }
 
 function startAnswerTimer() {
@@ -267,10 +275,8 @@ function startAnswerTimer() {
   countdownEl.textContent = answerTime;
   clearInterval(timerInterval);
 
-  // Rensa gamla svarsknappar, skapa nya
-  Array.from(document.querySelectorAll('.dynamic-answer')).forEach(btn => btn.remove());
-  let years = playerYears[currentPlayer].slice().sort((a, b) => a - b);
-  renderAnswerButtons(years);
+  // Visa alternativen (nu via showAnswerAlternatives)
+  showAnswerAlternatives();
 
   timerInterval = setInterval(() => {
     answerTime--;
